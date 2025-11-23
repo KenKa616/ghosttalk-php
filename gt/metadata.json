@@ -1,0 +1,7 @@
+{
+  "name": "GhostTalk",
+  "description": "A minimal, dark-mode ephemeral photo sharing app where posts disappear after 30 seconds.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
