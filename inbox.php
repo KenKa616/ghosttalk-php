@@ -50,6 +50,7 @@ include 'header.php';
     if (!friendId) {
         renderNav('chat');
         loadSessions();
+        setInterval(loadSessions, 2000);
     } else {
         // Chat Room Logic
         loadFriendDetails();
@@ -99,15 +100,29 @@ include 'header.php';
                 return;
             }
 
-            container.innerHTML = friends.map(f => `
-                <a href="inbox.php?friendId=${f.id}" class="chat-list-item">
+            container.innerHTML = friends.map(f => {
+                const time = f.lastMessageTime ? formatListTime(f.lastMessageTime * 1000) : '';
+                const isMe = f.lastMessageSenderId === user.id;
+                const check = isMe ? (f.lastMessageRead ? '<span style="color: #fff">✓✓</span>' : '✓') : '';
+                const preview = f.lastMessage ? (isMe ? `${check} ${f.lastMessage}` : f.lastMessage) : 'Tap to chat';
+                const unreadDot = f.unreadCount > 0 ? `<div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; background: #fff; border-radius: 50%;"></div>` : '';
+                
+                return `
+                <a href="inbox.php?friendId=${f.id}" class="chat-list-item" style="position: relative">
                     <img src="${f.avatar}" alt="av" class="avatar" style="width: 48px; height: 48px" />
-                    <div>
-                        <div style="font-weight: 600; font-size: 16px; color: #fff">${f.username}</div>
-                        <div style="font-size: 14px; color: #666">Tap to chat</div>
+                    <div style="flex: 1; min-width: 0">
+                        <div style="display: flex; justify-content: space-between; align-items: center">
+                            <div style="font-weight: 600; font-size: 16px; color: #fff">${f.username}</div>
+                            <div style="font-size: 12px; color: #999">${time}</div>
+                        </div>
+                        <div style="font-size: 14px; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px">
+                            ${preview}
+                        </div>
                     </div>
+                    ${unreadDot}
                 </a>
-            `).join('');
+                `;
+            }).join('');
         } catch (err) {
             console.error(err);
         }
@@ -127,15 +142,25 @@ include 'header.php';
             const container = document.getElementById('messages-container');
             if (!container) return;
             
-            // Simple diffing
-            if (container.children.length !== msgs.length) {
+            const newJson = JSON.stringify(msgs);
+            if (newJson !== window.lastMsgsJson) {
+                window.lastMsgsJson = newJson;
                 const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
                 
-                container.innerHTML = msgs.map(msg => `
-                    <div class="message-bubble ${msg.senderId === user.id ? 'msg-own' : 'msg-other'}">
-                        ${msg.text}
+                container.innerHTML = msgs.map(msg => {
+                    const isOwn = msg.senderId === user.id;
+                    const time = formatMessageTime(msg.timestamp);
+                    const check = isOwn ? (msg.read ? '<span style="color: #000080; font-weight: 900; margin-left: 4px">✓✓</span>' : '<span style="color: #000080; font-weight: 900; margin-left: 4px">✓</span>') : '';
+                    
+                    return `
+                    <div class="message-bubble ${isOwn ? 'msg-own' : 'msg-other'}" style="display: flex; flex-direction: column; align-items: ${isOwn ? 'flex-end' : 'flex-start'}">
+                        <div>${msg.text}</div>
+                        <div style="font-size: 10px; opacity: 0.7; margin-top: 4px; display: flex; align-items: center">
+                            ${time} ${check}
+                        </div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 // Auto scroll if new message or first load
                 if (wasAtBottom || container.children.length === msgs.length) { 
@@ -144,6 +169,34 @@ include 'header.php';
             }
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    function formatListTime(ms) {
+        const date = new Date(ms);
+        const now = new Date();
+        const isToday = date.getDate() === now.getDate() && 
+                        date.getMonth() === now.getMonth() && 
+                        date.getFullYear() === now.getFullYear();
+        
+        if (isToday) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        } else {
+            return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+        }
+    }
+
+    function formatMessageTime(ms) {
+        const date = new Date(ms);
+        const now = new Date();
+        const isToday = date.getDate() === now.getDate() && 
+                        date.getMonth() === now.getMonth() && 
+                        date.getFullYear() === now.getFullYear();
+        
+        if (isToday) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        } else {
+            return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`;
         }
     }
 
@@ -156,4 +209,6 @@ include 'header.php';
     window.addEventListener('load', scrollToBottom);
 </script>
 
-<?php if (!$friendId) include 'footer.php'; else echo '</div></div><script src="app.js"></script></body></html>'; ?>
+<?php if (!$friendId) include 'footer.php'; else echo '</div></div></body></html>'; ?>
+
+<!-- made by fuad-ismayil -->

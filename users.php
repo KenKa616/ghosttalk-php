@@ -136,3 +136,5 @@ if ($action === 'search' && $method === 'GET') {
         echo json_encode(null);
     }
 }
+
+// made by fuad-ismayil

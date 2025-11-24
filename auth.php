@@ -144,3 +144,5 @@ if ($action === 'register') {
         echo json_encode(null);
     }
 }
+
+// made by fuad-ismayil

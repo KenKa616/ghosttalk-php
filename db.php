@@ -34,3 +34,5 @@ function generateId() {
 function getJsonInput() {
     return json_decode(file_get_contents('php://input'), true);
 }
+
+// made by fuad-ismayil
