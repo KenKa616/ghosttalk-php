@@ -68,7 +68,7 @@ if ($action === 'search' && $method === 'GET') {
     }
 
     // Save image
-    $uploadDir = __DIR__ . '/../uploads/';
+    $uploadDir = __DIR__ . '/uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir);
     
     $fileName = 'av_' . $userId . '_' . time() . '.png';

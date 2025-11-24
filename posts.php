@@ -62,7 +62,7 @@ if ($method === 'GET') {
     }
 
     // Save image to file
-    $uploadDir = __DIR__ . '/../uploads/';
+    $uploadDir = __DIR__ . '/uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir);
     
     $fileName = generateId() . '.png';
