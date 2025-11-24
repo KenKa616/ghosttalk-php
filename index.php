@@ -1,12 +1,14 @@
 <?php include 'header.php'; ?>
 
-<header class="header">GhostTalk</header>
-<div class="page-container">
-    <div id="feed-container">
+<div class="header">
+    Feed
+</div>
+
+<div class="page-container" id="feed-container">
     <!-- Posts injected here -->
 </div>
 
-<div id="empty-state" class="flex-center flex-col" style="height: 60vh; color: #444; display: none;">
+<div id="empty-state" class="flex-center flex-col" style="height: 60vh; color: var(--text-muted); display: none;">
     <p>No ghosts here.</p>
     <p style="font-size: 12px">Tap + to post a 30s photo.</p>
 </div>
@@ -15,9 +17,8 @@
 <button class="fab" onclick="document.getElementById('fileInput').click()">
     +
 </button>
-<label for="fileInput" style="display: none">Upload Image</label>
+<label for="fileInput" class="sr-only">Upload Image</label>
 <input type="file" id="fileInput" style="display: none" accept="image/*" aria-label="Upload Image" onchange="handleFileChange(this)" />
-</div>
 
 <script>
     const user = requireAuth();
@@ -43,7 +44,6 @@
             emptyState.style.display = 'none';
             
             // Simple diffing: if count changed, re-render all (prototype shortcut)
-            // In a real app, we'd update individual items
             if (container.children.length !== validPosts.length) {
                 container.innerHTML = validPosts.map(post => createPostHTML(post)).join('');
                 attachPostEvents();

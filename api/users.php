@@ -13,11 +13,20 @@ if ($action === 'search' && $method === 'GET') {
         exit;
     }
 
-    $stmt = $db->prepare("SELECT id, username, avatar FROM users WHERE username LIKE ? AND id != ?");
-    $stmt->execute(["%$query%", $currentUserId]);
-    $users = $stmt->fetchAll();
+    $users = readData('users.json');
+    $results = [];
 
-    echo json_encode($users);
+    foreach ($users as $u) {
+        if ($u['id'] !== $currentUserId && stripos($u['username'], $query) !== false) {
+            $results[] = [
+                'id' => $u['id'],
+                'username' => $u['username'],
+                'avatar' => $u['avatar']
+            ];
+        }
+    }
+
+    echo json_encode($results);
 
 } elseif ($action === 'friend' && $method === 'POST') {
     $data = getJsonInput();
@@ -29,15 +38,24 @@ if ($action === 'search' && $method === 'GET') {
         exit;
     }
 
-    // Mutual add for prototype
-    try {
-        $db->prepare("INSERT OR IGNORE INTO friends (user_id, friend_id) VALUES (?, ?)")->execute([$userId, $friendId]);
-        $db->prepare("INSERT OR IGNORE INTO friends (user_id, friend_id) VALUES (?, ?)")->execute([$friendId, $userId]);
-        echo json_encode(['success' => true]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => $e->getMessage()]);
+    $friends = readData('friends.json');
+    
+    // Check if already exists
+    $exists = false;
+    foreach ($friends as $f) {
+        if ($f['user_id'] === $userId && $f['friend_id'] === $friendId) {
+            $exists = true;
+            break;
+        }
     }
+
+    if (!$exists) {
+        $friends[] = ['user_id' => $userId, 'friend_id' => $friendId];
+        $friends[] = ['user_id' => $friendId, 'friend_id' => $userId];
+        writeData('friends.json', $friends);
+    }
+
+    echo json_encode(['success' => true]);
 
 } elseif ($action === 'avatar' && $method === 'POST') {
     $data = getJsonInput();
@@ -62,25 +80,59 @@ if ($action === 'search' && $method === 'GET') {
     
     $publicUrl = '/uploads/' . $fileName;
 
-    $stmt = $db->prepare("UPDATE users SET avatar = ? WHERE id = ?");
-    $stmt->execute([$publicUrl, $userId]);
+    $users = readData('users.json');
+    $updatedUser = null;
 
-    // Return updated user
-    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
+    foreach ($users as &$u) {
+        if ($u['id'] === $userId) {
+            $u['avatar'] = $publicUrl;
+            $updatedUser = $u;
+            break;
+        }
+    }
+    writeData('users.json', $users);
 
     // Get friends
-    $stmt = $db->prepare("SELECT friend_id FROM friends WHERE user_id = ?");
-    $stmt->execute([$user['id']]);
-    $friends = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $allFriends = readData('friends.json');
+    $friends = [];
+    foreach ($allFriends as $f) {
+        if ($f['user_id'] === $userId) {
+            $friends[] = $f['friend_id'];
+        }
+    }
 
     echo json_encode([
-        'id' => $user['id'],
-        'username' => $user['username'],
-        'avatar' => $user['avatar'],
-        'inviteCode' => $user['invite_code'],
+        'id' => $updatedUser['id'],
+        'username' => $updatedUser['username'],
+        'avatar' => $updatedUser['avatar'],
+        'inviteCode' => $updatedUser['invite_code'],
         'friends' => $friends
     ]);
+
+} elseif ($action === 'get' && $method === 'GET') {
+    $targetId = $_GET['id'] ?? '';
+    if (!$targetId) {
+        echo json_encode(null);
+        exit;
+    }
+
+    $users = readData('users.json');
+    $foundUser = null;
+
+    foreach ($users as $u) {
+        if ($u['id'] === $targetId) {
+            $foundUser = $u;
+            break;
+        }
+    }
+
+    if ($foundUser) {
+        echo json_encode([
+            'id' => $foundUser['id'],
+            'username' => $foundUser['username'],
+            'avatar' => $foundUser['avatar']
+        ]);
+    } else {
+        echo json_encode(null);
+    }
 }
-?>

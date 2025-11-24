@@ -1,0 +1,18 @@
+[
+    {
+        "id": "c667e9222bfb35b4",
+        "sender_id": "eb64e1a4eadcef15",
+        "receiver_id": "04c763008eddaeef",
+        "text": "salam",
+        "timestamp": 1763987881,
+        "read": 1
+    },
+    {
+        "id": "a5a92007232c8af8",
+        "sender_id": "04c763008eddaeef",
+        "receiver_id": "eb64e1a4eadcef15",
+        "text": "Kj",
+        "timestamp": 1763987900,
+        "read": 1
+    }
+]

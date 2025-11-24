@@ -2,8 +2,8 @@
 
 <!-- Custom Header for Search -->
 <div class="header">
-    <label for="searchInput" style="display: none">Search users</label>
-    <input type="text" id="searchInput" placeholder="Search users..." aria-label="Search users" style="width: 90%; margin: 0; background: #222; border: none" autofocus />
+    <label for="searchInput" class="sr-only">Search users</label>
+    <input type="text" id="searchInput" placeholder="Search users..." aria-label="Search users" style="width: 90%; margin: 0; margin-top: 10px; background: var(--surface-light); border: none; border-radius: 20px" autofocus />
 </div>
 
 <div class="page-container">

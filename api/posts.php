@@ -11,46 +11,45 @@ if ($method === 'GET') {
     }
 
     // Get current user's friends
-    $stmt = $db->prepare("SELECT friend_id FROM friends WHERE user_id = ?");
-    $stmt->execute([$userId]);
-    $friends = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    $friends[] = $userId; // Include self
-
-    if (empty($friends)) {
-        echo json_encode([]);
-        exit;
+    $allFriends = readData('friends.json');
+    $friendIds = [$userId]; // Include self
+    foreach ($allFriends as $f) {
+        if ($f['user_id'] === $userId) {
+            $friendIds[] = $f['friend_id'];
+        }
     }
 
-    $placeholders = implode(',', array_fill(0, count($friends), '?'));
+    $allPosts = readData('posts.json');
+    $users = readData('users.json');
+    $userMap = [];
+    foreach ($users as $u) {
+        $userMap[$u['id']] = $u;
+    }
+
     $now = time();
+    $validPosts = [];
 
-    // Fetch valid posts
-    $sql = "SELECT p.*, u.username, u.avatar as userAvatar 
-            FROM posts p 
-            JOIN users u ON p.user_id = u.id 
-            WHERE p.user_id IN ($placeholders) 
-            AND p.expires_at > ? 
-            ORDER BY p.created_at DESC";
-    
-    $params = array_merge($friends, [$now]);
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    $posts = $stmt->fetchAll();
+    foreach ($allPosts as $p) {
+        if (in_array($p['user_id'], $friendIds) && $p['expires_at'] > $now) {
+            $user = $userMap[$p['user_id']] ?? ['username' => 'Unknown', 'avatar' => ''];
+            $validPosts[] = [
+                'id' => $p['id'],
+                'userId' => $p['user_id'],
+                'username' => $user['username'],
+                'userAvatar' => $user['avatar'],
+                'imageUrl' => $p['image_url'],
+                'createdAt' => (int)$p['created_at'] * 1000,
+                'expiresAt' => (int)$p['expires_at'] * 1000
+            ];
+        }
+    }
 
-    // Format for frontend
-    $formatted = array_map(function($p) {
-        return [
-            'id' => $p['id'],
-            'userId' => $p['user_id'],
-            'username' => $p['username'],
-            'userAvatar' => $p['userAvatar'],
-            'imageUrl' => $p['image_url'],
-            'createdAt' => (int)$p['created_at'] * 1000, // JS expects ms
-            'expiresAt' => (int)$p['expires_at'] * 1000
-        ];
-    }, $posts);
+    // Sort by created_at DESC
+    usort($validPosts, function($a, $b) {
+        return $b['createdAt'] - $a['createdAt'];
+    });
 
-    echo json_encode($formatted);
+    echo json_encode($validPosts);
 
 } elseif ($method === 'POST') {
     $data = getJsonInput();
@@ -62,14 +61,13 @@ if ($method === 'GET') {
         exit;
     }
 
-    // Save image to file to avoid bloating DB
+    // Save image to file
     $uploadDir = __DIR__ . '/../uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir);
     
-    $fileName = generateId() . '.png'; // Assuming PNG for simplicity or extracting from base64 header
+    $fileName = generateId() . '.png';
     $filePath = $uploadDir . $fileName;
     
-    // Simple base64 decode
     $parts = explode(',', $imageData);
     $base64 = count($parts) > 1 ? $parts[1] : $parts[0];
     file_put_contents($filePath, base64_decode($base64));
@@ -80,13 +78,27 @@ if ($method === 'GET') {
     $createdAt = time();
     $expiresAt = $createdAt + 30; // 30 seconds
 
-    $stmt = $db->prepare("INSERT INTO posts (id, user_id, image_url, created_at, expires_at) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$postId, $userId, $publicUrl, $createdAt, $expiresAt]);
+    $newPost = [
+        'id' => $postId,
+        'user_id' => $userId,
+        'image_url' => $publicUrl,
+        'created_at' => $createdAt,
+        'expires_at' => $expiresAt
+    ];
+
+    $posts = readData('posts.json');
+    $posts[] = $newPost;
+    writeData('posts.json', $posts);
 
     // Return the new post
-    $stmt = $db->prepare("SELECT username, avatar FROM users WHERE id = ?");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
+    $users = readData('users.json');
+    $user = null;
+    foreach ($users as $u) {
+        if ($u['id'] === $userId) {
+            $user = $u;
+            break;
+        }
+    }
 
     echo json_encode([
         'id' => $postId,
@@ -98,4 +110,3 @@ if ($method === 'GET') {
         'expiresAt' => $expiresAt * 1000
     ]);
 }
-?>

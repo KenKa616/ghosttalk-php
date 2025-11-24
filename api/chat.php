@@ -11,18 +11,43 @@ if ($method === 'GET' && $action === 'sessions') {
         exit;
     }
 
-    // Get friends
-    $stmt = $db->prepare("
-        SELECT u.id, u.username, u.avatar 
-        FROM users u 
-        JOIN friends f ON u.id = f.friend_id 
-        WHERE f.user_id = ?
-    ");
-    $stmt->execute([$userId]);
-    $friends = $stmt->fetchAll();
+    $allFriends = readData('friends.json');
+    $users = readData('users.json');
+    $userMap = [];
+    foreach ($users as $u) {
+        $userMap[$u['id']] = $u;
+    }
 
-    // In a real app we'd attach last message, but for now just friends list as sessions
-    echo json_encode($friends);
+    $sessions = [];
+    foreach ($allFriends as $f) {
+        if ($f['user_id'] === $userId && isset($userMap[$f['friend_id']])) {
+            $u = $userMap[$f['friend_id']];
+            $sessions[] = [
+                'id' => $u['id'],
+                'username' => $u['username'],
+                'avatar' => $u['avatar']
+            ];
+        }
+    }
+
+    echo json_encode($sessions);
+
+} elseif ($method === 'GET' && $action === 'unread') {
+    $userId = $_GET['userId'] ?? '';
+    if (!$userId) {
+        echo json_encode(['count' => 0]);
+        exit;
+    }
+    
+    $messages = readData('messages.json');
+    $count = 0;
+    foreach ($messages as $m) {
+        if ($m['receiver_id'] === $userId && ($m['read'] ?? 0) == 0) {
+            $count++;
+        }
+    }
+    
+    echo json_encode(['count' => $count]);
 
 } elseif ($method === 'GET') {
     // Get messages
@@ -34,43 +59,40 @@ if ($method === 'GET' && $action === 'sessions') {
         exit;
     }
 
-    // Mark as read
-    $updateStmt = $db->prepare("UPDATE messages SET read = 1 WHERE sender_id = ? AND receiver_id = ? AND read = 0");
-    $updateStmt->execute([$friendId, $userId]);
+    $allMessages = readData('messages.json');
+    $chatMessages = [];
+    $hasUpdates = false;
 
-    $stmt = $db->prepare("
-        SELECT * FROM messages 
-        WHERE (sender_id = ? AND receiver_id = ?) 
-           OR (sender_id = ? AND receiver_id = ?) 
-        ORDER BY timestamp ASC
-    ");
-    $stmt->execute([$userId, $friendId, $friendId, $userId]);
-    $messages = $stmt->fetchAll();
+    foreach ($allMessages as &$m) {
+        if (($m['sender_id'] === $userId && $m['receiver_id'] === $friendId) || 
+            ($m['sender_id'] === $friendId && $m['receiver_id'] === $userId)) {
+            
+            // Mark as read if I am the receiver
+            if ($m['receiver_id'] === $userId && ($m['read'] ?? 0) == 0) {
+                $m['read'] = 1;
+                $hasUpdates = true;
+            }
 
-    $formatted = array_map(function($m) {
-        return [
-            'id' => $m['id'],
-            'senderId' => $m['sender_id'],
-            'receiverId' => $m['receiver_id'],
-            'text' => $m['text'],
-            'timestamp' => (int)$m['timestamp'] * 1000
-        ];
-    }, $messages);
-
-    echo json_encode($formatted);
-
-} elseif ($method === 'GET' && $action === 'unread') {
-    $userId = $_GET['userId'] ?? '';
-    if (!$userId) {
-        echo json_encode(['count' => 0]);
-        exit;
+            $chatMessages[] = [
+                'id' => $m['id'],
+                'senderId' => $m['sender_id'],
+                'receiverId' => $m['receiver_id'],
+                'text' => $m['text'],
+                'timestamp' => (int)$m['timestamp'] * 1000
+            ];
+        }
     }
-    
-    $stmt = $db->prepare("SELECT COUNT(*) as count FROM messages WHERE receiver_id = ? AND read = 0");
-    $stmt->execute([$userId]);
-    $result = $stmt->fetch();
-    
-    echo json_encode(['count' => (int)$result['count']]);
+
+    if ($hasUpdates) {
+        writeData('messages.json', $allMessages);
+    }
+
+    // Sort by timestamp
+    usort($chatMessages, function($a, $b) {
+        return $a['timestamp'] - $b['timestamp'];
+    });
+
+    echo json_encode($chatMessages);
 
 } elseif ($method === 'POST') {
     // Send message
@@ -87,9 +109,21 @@ if ($method === 'GET' && $action === 'sessions') {
     $id = generateId();
     $timestamp = time();
 
-    $stmt = $db->prepare("INSERT INTO messages (id, sender_id, receiver_id, text, timestamp) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$id, $senderId, $receiverId, $text, $timestamp]);
+    $newMessage = [
+        'id' => $id,
+        'sender_id' => $senderId,
+        'receiver_id' => $receiverId,
+        'text' => $text,
+        'timestamp' => $timestamp,
+        'read' => 0
+    ];
+
+    $messages = readData('messages.json');
+    $messages[] = $newMessage;
+    writeData('messages.json', $messages);
+
+    // Debug logging
+    error_log("Message saved: " . json_encode($newMessage));
 
     echo json_encode(['success' => true]);
 }
-?>

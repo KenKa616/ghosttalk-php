@@ -1,18 +1,22 @@
 <?php include 'header.php'; ?>
 
-<div class="page-container flex-center flex-col" style="height: 100%">
-    <h1 style="font-size: 32px; letter-spacing: -1px; margin-bottom: 40px">GhostTalk.</h1>
-    
-    <form id="loginForm" style="width: 100%">
-        <label for="username" style="display: none">Username</label>
-        <input type="text" id="username" placeholder="Username" aria-label="Username" required />
-        <p id="error" style="color: #ff4444; margin-bottom: 12px; font-size: 14px; display: none"></p>
-        <button type="submit" class="primary-btn">Log In</button>
-    </form>
+<div class="page-container flex-col flex-center" style="padding-bottom: 20px; height: 100vh">
+    <div style="width: 100%; max-width: 320px; text-align: center">
+        <div style="font-size: 48px; margin-bottom: 10px">👻</div>
+        <h1 style="font-size: 32px; margin-bottom: 8px; background: linear-gradient(to right, #fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">GhostTalk</h1>
+        <p class="text-muted mb-4">Enter the void.</p>
+        
+        <form id="loginForm" style="width: 100%; margin-top: 32px">
+            <label for="username" class="sr-only">Username</label>
+            <input type="text" id="username" placeholder="Username" aria-label="Username" required />
+            <p id="error" style="color: var(--danger-color); margin-bottom: 16px; font-size: 14px; display: none"></p>
+            <button type="submit" class="primary-btn">Log In</button>
+        </form>
 
-    <p style="margin-top: 20px; color: #666">
-        Don't have an account? <a href="register.php" style="color: #fff; text-decoration: underline">Join</a>
-    </p>
+        <div class="mt-4">
+            <a href="register.php" style="color: var(--text-muted); font-size: 14px">Need an invite? <span style="color: var(--primary-color)">Join</span></a>
+        </div>
+    </div>
 </div>
 
 <script>

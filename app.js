@@ -67,17 +67,17 @@ function renderNav(activePage) {
     };
 
     nav.innerHTML = `
-        <a href="index.php" class="nav-item ${activePage === 'home' ? 'active' : ''}">
+        <a href="index.php" class="nav-item ${activePage === 'home' ? 'active' : ''}" aria-label="Home">
             ${icons.home(activePage === 'home')}
         </a>
-        <a href="search.php" class="nav-item ${activePage === 'search' ? 'active' : ''}">
+        <a href="search.php" class="nav-item ${activePage === 'search' ? 'active' : ''}" aria-label="Search">
             ${icons.search(activePage === 'search')}
         </a>
-        <a href="chat.php" class="nav-item ${activePage === 'chat' ? 'active' : ''}" style="position: relative">
+        <a href="chat.php" class="nav-item ${activePage === 'chat' ? 'active' : ''}" style="position: relative" aria-label="Chat">
             ${icons.chat(activePage === 'chat')}
             <div id="unread-dot" style="position: absolute; top: 10px; right: 20px; width: 8px; height: 8px; background: #fff; border-radius: 50%; display: none"></div>
         </a>
-        <a href="profile.php" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
+        <a href="profile.php" class="nav-item ${activePage === 'profile' ? 'active' : ''}" aria-label="Profile">
             ${icons.profile(activePage === 'profile')}
         </a>
     `;

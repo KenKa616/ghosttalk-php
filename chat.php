@@ -19,22 +19,27 @@ include 'header.php';
 <!-- Chat Room View -->
 <div id="chat-room-view" style="display: <?php echo $friendId ? 'flex' : 'none'; ?>; flex-direction: column; height: 100%">
     <?php if ($friendId): ?>
-        <div class="header" style="justify-content: flex-start; padding-left: 15px; position: sticky; top: 0">
-            <a href="chat.php" style="background: none; color: #fff; margin-right: 10px; font-size: 20px">←</a>
-            <span id="chat-friend-name">Chat</span>
+        <div class="header" style="justify-content: flex-start; padding-left: 20px; gap: 12px">
+            <a href="chat.php" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 50%">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </a>
+            <img id="chat-friend-avatar" src="" alt="av" class="avatar" style="display: none" />
+            <span id="chat-friend-name" style="font-size: 16px; font-weight: 600">Chat</span>
         </div>
-    <?php endif; ?>
+    <?php endif; ?> 
 
-    <div id="chat-scroll-container" class="page-container" style="display: flex; flex-direction: column; padding-bottom: 0; flex: 1">
+    <div id="chat-scroll-container" class="page-container" style="display: flex; flex-direction: column; padding-bottom: 90px; flex: 1">
         <div id="messages-container" style="flex: 1; display: flex; flex-direction: column;">
             <!-- Messages injected here -->
         </div>
     </div>
 
-    <form id="messageForm" style="padding: 10px; background: #000; border-top: 1px solid #222; display: flex; gap: 10px; position: sticky; bottom: 0">
-        <label for="messageInput" style="display: none">Message</label>
-        <input type="text" id="messageInput" placeholder="Message..." aria-label="Message" style="margin-bottom: 0; border-radius: 20px" autocomplete="off" />
-        <button type="submit" style="color: #fff; background: none; font-weight: bold">Send</button>
+    <form id="messageForm" style="padding: 16px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; gap: 12px; position: fixed; bottom: 0; width: 100%; max-width: 480px; z-index: 100; border-top: 1px solid rgba(255,255,255,0.05)">
+        <label for="messageInput" class="sr-only">Message</label>
+        <input type="text" id="messageInput" placeholder="Type a message..." aria-label="Message" style="margin-bottom: 0; border-radius: 24px; background: var(--surface-light); border: none; padding: 12px 20px" autocomplete="off" />
+        <button type="submit" style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-gradient); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
     </form>
 </div>
 
@@ -47,6 +52,7 @@ include 'header.php';
         loadSessions();
     } else {
         // Chat Room Logic
+        loadFriendDetails();
         loadMessages();
         setInterval(loadMessages, 2000);
 
@@ -64,6 +70,20 @@ include 'header.php';
                 console.error(err);
             }
         });
+    }
+
+    async function loadFriendDetails() {
+        try {
+            const friend = await apiCall(`users.php?action=get&id=${friendId}`);
+            if (friend) {
+                document.getElementById('chat-friend-name').textContent = friend.username;
+                const avatarEl = document.getElementById('chat-friend-avatar');
+                avatarEl.src = friend.avatar;
+                avatarEl.style.display = 'block';
+            }
+        } catch (err) {
+            console.error('Failed to load friend details');
+        }
     }
 
     async function loadSessions() {
@@ -109,7 +129,7 @@ include 'header.php';
             
             // Simple diffing
             if (container.children.length !== msgs.length) {
-                const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+                const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
                 
                 container.innerHTML = msgs.map(msg => `
                     <div class="message-bubble ${msg.senderId === user.id ? 'msg-own' : 'msg-other'}">
