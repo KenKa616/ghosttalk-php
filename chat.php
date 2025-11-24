@@ -63,7 +63,7 @@ include 'header.php';
             if (!text) return;
 
             try {
-                await apiCall('chat.php', 'POST', { senderId: user.id, receiverId: friendId, text });
+                await apiCall('messages.php', 'POST', { senderId: user.id, receiverId: friendId, text });
                 input.value = '';
                 loadMessages();
             } catch (err) {
@@ -88,7 +88,7 @@ include 'header.php';
 
     async function loadSessions() {
         try {
-            const friends = await apiCall(`chat.php?action=sessions&userId=${user.id}`);
+            const friends = await apiCall(`messages.php?action=sessions&userId=${user.id}`);
             const container = document.getElementById('sessions-container');
             const noFriends = document.getElementById('no-friends');
 
@@ -123,7 +123,7 @@ include 'header.php';
     async function loadMessages() {
         if (!friendId) return;
         try {
-            const msgs = await apiCall(`chat.php?userId=${user.id}&friendId=${friendId}`);
+            const msgs = await apiCall(`messages.php?userId=${user.id}&friendId=${friendId}`);
             const container = document.getElementById('messages-container');
             if (!container) return;
             

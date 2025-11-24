@@ -41,7 +41,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 }
 
 // --- UI UTILS ---
-function renderNav(activePage) {
+async function renderNav(activePage) {
     const nav = document.createElement('div');
     nav.className = 'bottom-nav';
 
@@ -84,12 +84,18 @@ function renderNav(activePage) {
     document.getElementById('root').appendChild(nav);
 
     // Check unread
-    if (getSession()) {
-        apiCall(`chat.php?action=unread&userId=${getSession().id}`).then(res => {
-            if (res.count > 0) {
-                document.getElementById('unread-dot').style.display = 'block';
+    const user = getSession();
+    if (user) {
+        // Update unread count
+        try {
+            const unread = await apiCall(`messages.php?action=unread&userId=${user.id}`);
+            const dot = document.getElementById('nav-unread-dot');
+            if (dot) {
+                dot.style.display = unread > 0 ? 'block' : 'none';
             }
-        }).catch(() => { });
+        } catch (e) {
+            console.error('Unread check failed', e);
+        }
     }
 }
 
