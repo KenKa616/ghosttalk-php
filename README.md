@@ -87,7 +87,7 @@ ghosttalk-php/
 
 <div align="center">
   <br />
-  <p>Made with ❤️ by <b>fuad-ismayil and kenka616</b></p>
+  <p>Made with ❤️ by <b>fuad-ismayil and KenKa616</b></p>
   <br />
 </div>
 
