@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Data Directory
-$dataDir = __DIR__ . '/../data/';
+$dataDir = __DIR__ . '/data/';
 if (!is_dir($dataDir)) mkdir($dataDir, 0777, true);
 
 // Helper Functions

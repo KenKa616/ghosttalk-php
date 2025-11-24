@@ -123,8 +123,10 @@
     }
 
     // Initial load and polling
-    loadFeed();
-    setInterval(loadFeed, 1000);
+    if (user) {
+        loadFeed();
+        setInterval(loadFeed, 1000);
+    }
 </script>
 
 <?php include 'footer.php'; ?>

@@ -20,7 +20,7 @@ include 'header.php';
 <div id="chat-room-view" style="display: <?php echo $friendId ? 'flex' : 'none'; ?>; flex-direction: column; height: 100%">
     <?php if ($friendId): ?>
         <div class="header" style="justify-content: flex-start; padding-left: 20px; gap: 12px">
-            <a href="chat.php" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 50%">
+            <a href="inbox.php" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 50%">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </a>
             <img id="chat-friend-avatar" src="" alt="av" class="avatar" style="display: none" />
@@ -63,7 +63,7 @@ include 'header.php';
             if (!text) return;
 
             try {
-                await apiCall('messages.php', 'POST', { senderId: user.id, receiverId: friendId, text });
+                await apiCall('sync.php', 'POST', { senderId: user.id, receiverId: friendId, text });
                 input.value = '';
                 loadMessages();
             } catch (err) {
@@ -88,7 +88,7 @@ include 'header.php';
 
     async function loadSessions() {
         try {
-            const friends = await apiCall(`messages.php?action=sessions&userId=${user.id}`);
+            const friends = await apiCall(`sync.php?action=sessions&userId=${user.id}`);
             const container = document.getElementById('sessions-container');
             const noFriends = document.getElementById('no-friends');
 
@@ -100,7 +100,7 @@ include 'header.php';
             }
 
             container.innerHTML = friends.map(f => `
-                <a href="chat.php?friendId=${f.id}" class="chat-list-item">
+                <a href="inbox.php?friendId=${f.id}" class="chat-list-item">
                     <img src="${f.avatar}" alt="av" class="avatar" style="width: 48px; height: 48px" />
                     <div>
                         <div style="font-weight: 600; font-size: 16px; color: #fff">${f.username}</div>
@@ -123,7 +123,7 @@ include 'header.php';
     async function loadMessages() {
         if (!friendId) return;
         try {
-            const msgs = await apiCall(`messages.php?userId=${user.id}&friendId=${friendId}`);
+            const msgs = await apiCall(`sync.php?userId=${user.id}&friendId=${friendId}`);
             const container = document.getElementById('messages-container');
             if (!container) return;
             

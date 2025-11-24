@@ -1,4 +1,4 @@
-var API_URL = '/api';
+var API_URL = '';
 
 // --- AUTH UTILS ---
 function getSession() {
@@ -32,7 +32,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     };
     if (body) options.body = JSON.stringify(body);
 
-    const res = await fetch(`${API_URL}/${endpoint}`, options);
+    const res = await fetch(`${API_URL}${endpoint}`, options);
     if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'API Error');
@@ -73,9 +73,9 @@ async function renderNav(activePage) {
         <a href="search.php" class="nav-item ${activePage === 'search' ? 'active' : ''}" aria-label="Search">
             ${icons.search(activePage === 'search')}
         </a>
-        <a href="chat.php" class="nav-item ${activePage === 'chat' ? 'active' : ''}" style="position: relative" aria-label="Chat">
+        <a href="inbox.php" class="nav-item ${activePage === 'chat' ? 'active' : ''}" style="position: relative" aria-label="Chat">
             ${icons.chat(activePage === 'chat')}
-            <div id="unread-dot" style="position: absolute; top: 10px; right: 20px; width: 8px; height: 8px; background: #fff; border-radius: 50%; display: none"></div>
+            <div id="nav-unread-dot" style="position: absolute; top: 10px; right: 20px; width: 8px; height: 8px; background: #fff; border-radius: 50%; display: none"></div>
         </a>
         <a href="profile.php" class="nav-item ${activePage === 'profile' ? 'active' : ''}" aria-label="Profile">
             ${icons.profile(activePage === 'profile')}
@@ -88,7 +88,7 @@ async function renderNav(activePage) {
     if (user) {
         // Update unread count
         try {
-            const unread = await apiCall(`messages.php?action=unread&userId=${user.id}`);
+            const unread = await apiCall(`sync.php?action=unread&userId=${user.id}`);
             const dot = document.getElementById('nav-unread-dot');
             if (dot) {
                 dot.style.display = unread > 0 ? 'block' : 'none';
