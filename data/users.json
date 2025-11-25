@@ -1,9 +1,10 @@
 [
     {
-        "id": "16627ea0fc2412c8",
+        "id": "6ce1e35dfcac9b00",
         "username": "fuad-ismayil",
+        "password_hash": "$2y$12$pFToyIMV4UxBlqC2JNMS9eWqjeQyJHVTqaY68Pb\/\/rvZQi8UAlKFe",
         "avatar": "https:\/\/api.dicebear.com\/7.x\/avataaars\/svg?seed=fuad-ismayil",
-        "invite_code": "4EC286",
-        "created_at": 1764000672
+        "invite_code": "7CCBFE",
+        "created_at": 1764030162
     }
 ]

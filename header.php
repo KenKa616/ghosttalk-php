@@ -109,41 +109,19 @@
         async function renderNav(activePage) {
             const nav = document.createElement('div');
             nav.className = 'bottom-nav';
-
-            const icons = {
-                home: (active) => `
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="${active ? "#fff" : "none"}" stroke="${active ? "#fff" : "#666"}" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    </svg>`,
-                search: (active) => `
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${active ? "#fff" : "#666"}" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>`,
-                chat: (active) => `
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="${active ? "#fff" : "none"}" stroke="${active ? "#fff" : "#666"}" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>`,
-                profile: (active) => `
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="${active ? "#fff" : "none"}" stroke="${active ? "#fff" : "#666"}" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>`
-            };
-
             nav.innerHTML = `
-                <a href="index.php" class="nav-item ${activePage === 'home' ? 'active' : ''}" aria-label="Home">
-                    ${icons.home(activePage === 'home')}
+                <a href="index.php?page=home" class="nav-item ${activePage === 'home' ? 'active' : ''}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </a>
-                <a href="search.php" class="nav-item ${activePage === 'search' ? 'active' : ''}" aria-label="Search">
-                    ${icons.search(activePage === 'search')}
+                <a href="index.php?page=search" class="nav-item ${activePage === 'search' ? 'active' : ''}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </a>
-                <a href="inbox.php" class="nav-item ${activePage === 'chat' ? 'active' : ''}" style="position: relative" aria-label="Chat">
-                    ${icons.chat(activePage === 'chat')}
-                    <div id="nav-unread-dot" style="position: absolute; top: 10px; right: 20px; width: 8px; height: 8px; background: #fff; border-radius: 50%; display: none"></div>
+                <a href="index.php?page=inbox" class="nav-item ${activePage === 'inbox' ? 'active' : ''}" style="position: relative">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <div id="nav-unread-dot" class="unread-dot"></div>
                 </a>
-                <a href="profile.php" class="nav-item ${activePage === 'profile' ? 'active' : ''}" aria-label="Profile">
-                    ${icons.profile(activePage === 'profile')}
+                <a href="index.php?page=profile" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </a>
             `;
             document.getElementById('root').appendChild(nav);
@@ -191,7 +169,7 @@
                 document.getElementById('popup-name').textContent = msg.senderName;
                 document.getElementById('popup-text').textContent = msg.text;
                 
-                popup.onclick = () => window.location.href = `inbox.php?friendId=${msg.senderId}`;
+                popup.onclick = () => window.location.href = `index.php?page=inbox&friendId=${msg.senderId}`;
                 
                 popup.classList.add('show');
                 

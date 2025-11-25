@@ -3,10 +3,36 @@ require 'db.php';
 
 $action = $_GET['action'] ?? '';
 
-if ($action === 'register') {
+// made by fuad-ismayil
+
+if ($action === 'check_username') {
+    $username = $_GET['username'] ?? '';
+    if (strlen($username) < 3) {
+        echo json_encode(['available' => false]);
+        exit;
+    }
+
+    $users = readData('users.json');
+    $available = true;
+    foreach ($users as $u) {
+        if (strcasecmp($u['username'], $username) === 0) {
+            $available = false;
+            break;
+        }
+    }
+    echo json_encode(['available' => $available]);
+
+} elseif ($action === 'register') {
     $data = getJsonInput();
     $username = $data['username'] ?? '';
+    $password = $data['password'] ?? '';
     $inviteCode = $data['inviteCode'] ?? '';
+
+    if (strlen($password) < 6) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Password must be at least 6 characters']);
+        exit;
+    }
 
     $users = readData('users.json');
 
@@ -48,6 +74,7 @@ if ($action === 'register') {
     $newUser = [
         'id' => $userId,
         'username' => $username,
+        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         'avatar' => $avatar,
         'invite_code' => $newInviteCode,
         'created_at' => time()
@@ -75,6 +102,7 @@ if ($action === 'register') {
 } elseif ($action === 'login') {
     $data = getJsonInput();
     $username = $data['username'] ?? '';
+    $password = $data['password'] ?? '';
 
     $users = readData('users.json');
     $user = null;
@@ -85,9 +113,9 @@ if ($action === 'register') {
         }
     }
 
-    if (!$user) {
-        http_response_code(404);
-        echo json_encode(['error' => 'User not found']);
+    if (!$user || !password_verify($password, $user['password_hash'] ?? '')) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Invalid credentials']);
         exit;
     }
 
@@ -107,6 +135,99 @@ if ($action === 'register') {
         'inviteCode' => $user['invite_code'],
         'friends' => $friends
     ]);
+
+} elseif ($action === 'update_password') {
+    $data = getJsonInput();
+    $userId = $data['userId'] ?? '';
+    $oldPassword = $data['oldPassword'] ?? '';
+    $newPassword = $data['newPassword'] ?? '';
+
+    if (strlen($newPassword) < 6) {
+        http_response_code(400);
+        echo json_encode(['error' => 'New password too short']);
+        exit;
+    }
+
+    $users = readData('users.json');
+    $updated = false;
+
+    foreach ($users as &$u) {
+        if ($u['id'] === $userId) {
+            if (!password_verify($oldPassword, $u['password_hash'] ?? '')) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Incorrect old password']);
+                exit;
+            }
+            $u['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+            $updated = true;
+            break;
+        }
+    }
+
+    if ($updated) {
+        writeData('users.json', $users);
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'User not found']);
+    }
+
+} elseif ($action === 'update_username') {
+    $data = getJsonInput();
+    $userId = $data['userId'] ?? '';
+    $newUsername = $data['newUsername'] ?? '';
+
+    if (strlen($newUsername) < 3) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Username too short']);
+        exit;
+    }
+
+    $users = readData('users.json');
+    
+    // Check availability
+    foreach ($users as $u) {
+        if ($u['id'] !== $userId && strcasecmp($u['username'], $newUsername) === 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Username taken']);
+            exit;
+        }
+    }
+
+    $updatedUser = null;
+    foreach ($users as &$u) {
+        if ($u['id'] === $userId) {
+            $u['username'] = $newUsername;
+            // Update avatar seed too? Maybe keep old one. Let's update it to match new identity.
+            $u['avatar'] = "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($newUsername);
+            $updatedUser = $u;
+            break;
+        }
+    }
+
+    if ($updatedUser) {
+        writeData('users.json', $users);
+        
+        // Get friends for session update
+        $allFriends = readData('friends.json');
+        $friends = [];
+        foreach ($allFriends as $f) {
+            if ($f['user_id'] === $userId) {
+                $friends[] = $f['friend_id'];
+            }
+        }
+
+        echo json_encode([
+            'id' => $updatedUser['id'],
+            'username' => $updatedUser['username'],
+            'avatar' => $updatedUser['avatar'],
+            'inviteCode' => $updatedUser['invite_code'],
+            'friends' => $friends
+        ]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'User not found']);
+    }
 
 } elseif ($action === 'me') {
     $id = $_GET['id'] ?? '';

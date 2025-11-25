@@ -1,5 +1,7 @@
 <?php include 'header.php'; ?>
 
+<?php include 'header.php'; ?>
+
 <div class="page-container flex-col flex-center" style="padding-bottom: 20px; height: 100vh">
     <div style="width: 100%; max-width: 320px; text-align: center">
         <div style="font-size: 48px; margin-bottom: 10px">👻</div>
@@ -9,6 +11,10 @@
         <form id="loginForm" style="width: 100%; margin-top: 32px">
             <label for="username" class="sr-only">Username</label>
             <input type="text" id="username" placeholder="Username" aria-label="Username" required />
+            
+            <label for="password" class="sr-only">Password</label>
+            <input type="password" id="password" placeholder="Password" aria-label="Password" required />
+            
             <p id="error" style="color: var(--danger-color); margin-bottom: 16px; font-size: 14px; display: none"></p>
             <button type="submit" class="primary-btn">Log In</button>
         </form>
@@ -23,10 +29,11 @@
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
         const errorEl = document.getElementById('error');
         
         try {
-            const user = await apiCall('auth.php?action=login', 'POST', { username });
+            const user = await apiCall('auth.php?action=login', 'POST', { username, password });
             setSession(user);
             window.location.href = 'index.php';
         } catch (err) {
