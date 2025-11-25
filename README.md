@@ -32,6 +32,12 @@
   - **Unread Dots**: Visual indicators for unread chats and messages.
 - **✓✓ Read Receipts**: Real-time status updates (Sent ✓ -> Read ✓✓).
 - **📅 Smart Timestamps**: Automatically formats time based on the message date (24h format).
+- **⚙️ Profile Settings**:
+  - **Live Username Check**: Real-time availability feedback.
+  - **Secure Updates**: Change password and username with ease.
+- **🔒 Security**:
+  - **Password Hashing**: Secure storage using PHP's `password_hash`.
+  - **Input Sanitization**: Protection against XSS and injection attacks.
 - **🔍 User Search**: Easily find and connect with other users.
 
 ## 🛠️ Technology Stack
@@ -77,7 +83,7 @@ ghosttalk-php/
 ├── data/               # JSON data storage
 ├── uploads/            # User avatars and media
 ├── auth.php            # Authentication logic
-├── inbox.php           # Main chat interface
+├── index.php           # Main application logic (Router & UI)
 ├── sync.php            # API endpoint for real-time updates
 ├── style.css           # Global styles
 └── ...
