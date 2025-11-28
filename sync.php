@@ -214,8 +214,8 @@ if ($method === 'GET' && $action === 'sessions') {
 }
 
 function sendOneSignalNotification($userId, $senderName, $messageContent) {
-    $appId = "76bd2ec6-6a59-4324-a4ea-d90de19ed3c5";
-    $restKey = "os_v2_app_o26s5rtklfbsjjhk3eg6dhwtywwmvdrehkuuy5n6a6uer6jnc4rhwf6cbnd7hyurabymcmovskihpkozanthzpo3est7f23ajfj5lyq";
+    $appId = "{YOUR-APP-ID}";
+    $restKey = "{YOUR-REST-API-KEY}";
 
     $content = [
         "en" => "Message: " . $messageContent
