@@ -28,17 +28,20 @@
 - **💎 Glassmorphism UI**: A stunning, modern interface with blur effects and smooth animations.
 - **📱 Fully Responsive**: Optimized for desktop, tablet, and mobile devices.
 - **🔔 Smart Notifications**:
-  - **Popup Alerts**: Sleek, non-intrusive popups for new messages.
+  - **Push Notifications**: Integrated OneSignal for offline web push notifications.
+  - **Popup Alerts**: Sleek, non-intrusive popups for new messages while online.
   - **Unread Dots**: Visual indicators for unread chats and messages.
+- **🟢 Global Online Status**: Real-time online/offline indicators across the entire app.
 - **✓✓ Read Receipts**: Real-time status updates (Sent ✓ -> Read ✓✓).
 - **📅 Smart Timestamps**: Automatically formats time based on the message date (24h format).
+- **💬 Immersive Chat**: Bottom navigation automatically hides for a focused chat experience.
 - **⚙️ Profile Settings**:
   - **Live Username Check**: Real-time availability feedback.
   - **Secure Updates**: Change password and username with ease.
 - **🔒 Security**:
   - **Password Hashing**: Secure storage using PHP's `password_hash`.
   - **Input Sanitization**: Protection against XSS and injection attacks.
-- **🔍 User Search**: Easily find and connect with other users.
+- **🔍 Instant Search**: Real-time user search with instant results and "Add Friend" capability.
 
 ## 🛠️ Technology Stack
 
