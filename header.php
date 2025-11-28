@@ -188,6 +188,19 @@
             return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         }
     </script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "76bd2ec6-6a59-4324-a4ea-d90de19ed3c5",
+        });
+        const user = JSON.parse(localStorage.getItem('gt_user'));
+        if (user && user.id) {
+            OneSignal.login(user.id);
+        }
+      });
+    </script>
 </head>
 <body>
     <div id="root">

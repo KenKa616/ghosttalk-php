@@ -11,6 +11,8 @@ if ($method === 'GET' && $action === 'sessions') {
         exit;
     }
 
+    updateUserActivity($userId);
+
     $allFriends = readData('friends.json');
     $users = readData('users.json');
     $userMap = [];
@@ -42,6 +44,9 @@ if ($method === 'GET' && $action === 'sessions') {
                 }
             }
 
+            $lastActive = $u['last_active'] ?? 0;
+            $isOnline = (time() - $lastActive) < 10; // 10 seconds threshold
+
             $sessions[] = [
                 'id' => $u['id'],
                 'username' => $u['username'],
@@ -50,7 +55,8 @@ if ($method === 'GET' && $action === 'sessions') {
                 'lastMessageTime' => $lastMsg ? $lastMsg['timestamp'] : null,
                 'lastMessageSenderId' => $lastMsg ? $lastMsg['sender_id'] : null,
                 'lastMessageRead' => $lastMsg ? ($lastMsg['read'] ?? 0) : 0,
-                'unreadCount' => $unread
+                'unreadCount' => $unread,
+                'isOnline' => $isOnline
             ];
         }
     }
@@ -68,6 +74,8 @@ if ($method === 'GET' && $action === 'sessions') {
         echo json_encode(['count' => 0]);
         exit;
     }
+
+    updateUserActivity($userId);
     
     $messages = readData('messages.json');
     $users = readData('users.json');
@@ -179,7 +187,71 @@ if ($method === 'GET' && $action === 'sessions') {
     // Debug logging
     error_log("Message saved: " . json_encode($newMessage));
 
+    // Check if receiver is offline and send push
+    $users = readData('users.json');
+    $receiver = null;
+    $senderName = 'Someone';
+    
+    foreach ($users as $u) {
+        if ($u['id'] === $receiverId) {
+            $receiver = $u;
+        }
+        if ($u['id'] === $senderId) {
+            $senderName = $u['username'];
+        }
+    }
+
+    if ($receiver) {
+        $lastActive = $receiver['last_active'] ?? 0;
+        $isOffline = (time() - $lastActive) > 10; // 10 seconds threshold
+
+        if ($isOffline) {
+            sendOneSignalNotification($receiverId, $senderName, $text);
+        }
+    }
+
     echo json_encode(['success' => true]);
+}
+
+function sendOneSignalNotification($userId, $senderName, $messageContent) {
+    $appId = "76bd2ec6-6a59-4324-a4ea-d90de19ed3c5";
+    $restKey = "os_v2_app_o26s5rtklfbsjjhk3eg6dhwtywwmvdrehkuuy5n6a6uer6jnc4rhwf6cbnd7hyurabymcmovskihpkozanthzpo3est7f23ajfj5lyq";
+
+    $content = [
+        "en" => "Message: " . $messageContent
+    ];
+    
+    $headings = [
+        "en" => "New message from " . $senderName
+    ];
+
+    $fields = [
+        'app_id' => $appId,
+        'include_aliases' => [
+            "external_id" => [$userId]
+        ],
+        'target_channel' => 'push',
+        'contents' => $content,
+        'headings' => $headings,
+        'url' => 'http://localhost:8000/index.php?page=inbox' // Adjust for production
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://onesignal.com/api/v1/notifications");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json; charset=utf-8',
+        'Authorization: Basic ' . $restKey
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+    curl_setopt($ch, CURLOPT_POST, TRUE);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    error_log("OneSignal Response: " . $response);
 }
 
 // made by fuad-ismayil

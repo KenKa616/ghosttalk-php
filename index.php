@@ -143,7 +143,6 @@ $page = $_GET['page'] ?? 'home';
 
     <div class="page-container">
         <div id="results-container">
-            <!-- Results injected here -->
         </div>
         <p id="no-results" style="color: #444; text-align: center; margin-top: 20px; display: none">No users found.</p>
     </div>
@@ -193,7 +192,6 @@ $page = $_GET['page'] ?? 'home';
             try {
                 await apiCall('users.php?action=friend', 'POST', { userId: user.id, friendId });
                 alert('Friend added!');
-                // Refresh search to potentially remove added friend or update UI (optional)
             } catch (err) {
                 alert('Failed to add friend');
             }
@@ -220,6 +218,7 @@ $page = $_GET['page'] ?? 'home';
     <!-- Chat Room View -->
     <div id="chat-room-view" style="display: <?php echo $friendId ? 'flex' : 'none'; ?>; flex-direction: column; height: 100%">
         <?php if ($friendId): ?>
+            <style>.bottom-nav { display: none !important; }</style>
             <div class="header" style="justify-content: flex-start; padding-left: 20px; gap: 12px">
                 <a href="index.php?page=inbox" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 50%">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -241,12 +240,17 @@ $page = $_GET['page'] ?? 'home';
             <button type="submit" style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-gradient); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
+        </form>
+    </div>
+
     <script>
         const user = requireAuth();
         const friendId = "<?php echo $friendId; ?>";
         
+        // Render Bottom Nav
+        renderNav('inbox');
+
         if (!friendId) {
-            renderNav('inbox');
             loadSessions();
             setInterval(loadSessions, 2000);
         } else {
@@ -254,6 +258,7 @@ $page = $_GET['page'] ?? 'home';
             loadFriendDetails();
             loadMessages();
             setInterval(loadMessages, 2000);
+            setInterval(loadFriendDetails, 5000);
 
             document.getElementById('messageForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -275,7 +280,12 @@ $page = $_GET['page'] ?? 'home';
             try {
                 const friend = await apiCall(`users.php?action=get&id=${friendId}`);
                 if (friend) {
-                    document.getElementById('chat-friend-name').textContent = friend.username;
+                    document.getElementById('chat-friend-name').innerHTML = `
+                        ${friend.username}
+                        <span style="font-size: 12px; color: ${friend.isOnline ? '#10b981' : '#666'}; font-weight: normal; margin-left: 8px">
+                            ${friend.isOnline ? 'Online' : 'Offline'}
+                        </span>
+                    `;
                     const avatarEl = document.getElementById('chat-friend-avatar');
                     avatarEl.src = friend.avatar;
                     avatarEl.style.display = 'block';
@@ -304,11 +314,15 @@ $page = $_GET['page'] ?? 'home';
                     const check = isMe ? (f.lastMessageRead ? '<span style="color: #fff">✓✓</span>' : '✓') : '';
                     const preview = f.lastMessage ? (isMe ? `${check} ${f.lastMessage}` : f.lastMessage) : 'Tap to chat';
                     const unreadDot = f.unreadCount > 0 ? `<div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; background: #fff; border-radius: 50%;"></div>` : '';
-                    
+                    const onlineDot = f.isOnline ? `<div style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; border: 2px solid #000; position: absolute; bottom: 0; right: 0"></div>` : '';
+
                     return `
                     <a href="index.php?page=inbox&friendId=${f.id}" class="chat-list-item" style="position: relative">
-                        <img src="${f.avatar}" alt="av" class="avatar" style="width: 48px; height: 48px" />
-                        <div style="flex: 1; min-width: 0">
+                        <div style="position: relative; width: 48px; height: 48px">
+                            <img src="${f.avatar}" alt="av" class="avatar" style="width: 100%; height: 100%" />
+                            ${onlineDot}
+                        </div>
+                        <div style="flex: 1; min-width: 0; margin-left: 12px">
                             <div style="display: flex; justify-content: space-between; align-items: center">
                                 <div style="font-weight: 600; font-size: 16px; color: #fff">${f.username}</div>
                                 <div style="font-size: 12px; color: #999">${time}</div>
@@ -370,6 +384,11 @@ $page = $_GET['page'] ?? 'home';
             }
         }
 
+        function formatMessageTime(ms) {
+            const date = new Date(ms);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+
         function formatListTime(ms) {
             const date = new Date(ms);
             const now = new Date();
@@ -383,27 +402,6 @@ $page = $_GET['page'] ?? 'home';
                 return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
             }
         }
-
-        function formatMessageTime(ms) {
-            const date = new Date(ms);
-            const now = new Date();
-            const isToday = date.getDate() === now.getDate() && 
-                            date.getMonth() === now.getMonth() && 
-                            date.getFullYear() === now.getFullYear();
-            
-            if (isToday) {
-                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            } else {
-                return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`;
-            }
-        }
-        // Auto-scroll on input focus (mobile keyboard)
-        document.getElementById('messageInput')?.addEventListener('focus', () => {
-            setTimeout(scrollToBottom, 300); // Delay for keyboard animation
-        });
-        
-        // Initial scroll
-        window.addEventListener('load', scrollToBottom);
     </script>
 
 <?php elseif ($page === 'profile'): ?>

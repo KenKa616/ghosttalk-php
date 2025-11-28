@@ -5,6 +5,7 @@
         "password_hash": "$2y$12$pFToyIMV4UxBlqC2JNMS9eWqjeQyJHVTqaY68Pb\/\/rvZQi8UAlKFe",
         "avatar": "https:\/\/api.dicebear.com\/7.x\/avataaars\/svg?seed=fuad-ismayil",
         "invite_code": "7CCBFE",
-        "created_at": 1764030162
+        "created_at": 1764030162,
+        "last_active": 1764315191
     }
 ]

@@ -35,4 +35,20 @@ function getJsonInput() {
     return json_decode(file_get_contents('php://input'), true);
 }
 
+function updateUserActivity($userId) {
+    if (!$userId) return;
+    $users = readData('users.json');
+    $changed = false;
+    foreach ($users as &$u) {
+        if ($u['id'] === $userId) {
+            $u['last_active'] = time();
+            $changed = true;
+            break;
+        }
+    }
+    if ($changed) {
+        writeData('users.json', $users);
+    }
+}
+
 // made by fuad-ismayil

@@ -127,10 +127,14 @@ if ($action === 'search' && $method === 'GET') {
     }
 
     if ($foundUser) {
+        $lastActive = $foundUser['last_active'] ?? 0;
+        $isOnline = (time() - $lastActive) < 10;
+
         echo json_encode([
             'id' => $foundUser['id'],
             'username' => $foundUser['username'],
-            'avatar' => $foundUser['avatar']
+            'avatar' => $foundUser['avatar'],
+            'isOnline' => $isOnline
         ]);
     } else {
         echo json_encode(null);
