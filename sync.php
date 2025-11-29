@@ -142,7 +142,8 @@ if ($method === 'GET' && $action === 'sessions') {
                 'receiverId' => $m['receiver_id'],
                 'text' => $m['text'],
                 'timestamp' => (int)$m['timestamp'] * 1000,
-                'read' => $m['read'] ?? 0
+                'read' => $m['read'] ?? 0,
+                'replyToId' => $m['reply_to_id'] ?? null
             ];
         }
     }
@@ -164,6 +165,7 @@ if ($method === 'GET' && $action === 'sessions') {
     $senderId = $data['senderId'] ?? '';
     $receiverId = $data['receiverId'] ?? '';
     $text = $data['text'] ?? '';
+    $replyToId = $data['replyToId'] ?? null;
 
     if (!$senderId || !$receiverId || !$text) {
         http_response_code(400);
@@ -179,7 +181,8 @@ if ($method === 'GET' && $action === 'sessions') {
         'receiver_id' => $receiverId,
         'text' => $text,
         'timestamp' => $timestamp,
-        'read' => 0
+        'read' => 0,
+        'reply_to_id' => $replyToId
     ];
 
     $messages = readData('messages.json');

@@ -218,7 +218,72 @@ $page = $_GET['page'] ?? 'home';
     <!-- Chat Room View -->
     <div id="chat-room-view" style="display: <?php echo $friendId ? 'flex' : 'none'; ?>; flex-direction: column; height: 100%">
         <?php if ($friendId): ?>
-            <style>.bottom-nav { display: none !important; }</style>
+            <style>
+                .bottom-nav { display: none !important; }
+                .msg-popup.show {
+                    transform: translateX(-50%) translateY(0);
+                }
+                /* Reply Styles */
+                .reply-preview-bar {
+                    position: absolute;
+                    bottom: 100%;
+                    left: 0;
+                    width: 100%;
+                    background: rgba(30, 30, 30, 0.95);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    padding: 12px 16px;
+                    display: none;
+                    flex-direction: column;
+                    gap: 4px;
+                    z-index: 90;
+                    transform: translateY(10px);
+                    opacity: 0;
+                    transition: all 0.2s ease;
+                }
+                .reply-preview-bar.show {
+                    display: flex;
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+                .reply-label {
+                    font-size: 12px;
+                    color: var(--primary-color);
+                    font-weight: 600;
+                }
+                .reply-content {
+                    font-size: 13px;
+                    color: rgba(255, 255, 255, 0.7);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    padding-left: 8px;
+                    border-left: 2px solid var(--primary-color);
+                }
+                .reply-bubble-mini {
+                    font-size: 11px;
+                    padding: 6px 10px;
+                    margin-bottom: 4px;
+                    border-radius: 12px;
+                    background: rgba(0, 0, 0, 0.2);
+                    color: rgba(255, 255, 255, 0.8);
+                    cursor: pointer;
+                    width: fit-content;
+                    max-width: 100%;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    transform: scale(0.95);
+                    transform-origin: left bottom;
+                }
+                .msg-own .reply-bubble-mini {
+                    background: rgba(255, 255, 255, 0.2);
+                    color: rgba(255, 255, 255, 0.9);
+                    transform-origin: right bottom;
+                    align-self: flex-end;
+                }
+            </style>
             <div class="header" style="justify-content: flex-start; padding-left: 20px; gap: 12px">
                 <a href="index.php?page=inbox" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 50%">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -228,24 +293,39 @@ $page = $_GET['page'] ?? 'home';
             </div>
         <?php endif; ?> 
 
-        <div id="chat-scroll-container" class="page-container" style="display: flex; flex-direction: column; padding-bottom: 90px; flex: 1">
+        <div id="chat-scroll-container" class="page-container" style="display: flex; flex-direction: column; padding-bottom: 90px; flex: 1; touch-action: pan-y">
             <div id="messages-container" style="flex: 1; display: flex; flex-direction: column;">
                 <!-- Messages injected here -->
             </div>
         </div>
+        
+        <div style="position: fixed; bottom: 0; width: 100%; max-width: 480px; z-index: 100">
+            <!-- Reply Preview Bar -->
+            <div id="reply-preview" class="reply-preview-bar">
+                <div class="flex-between">
+                    <span id="reply-label" class="reply-label">Replying to...</span>
+                    <button onclick="cancelReply()" style="background: none; border: none; color: #999; padding: 4px">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <div id="reply-text" class="reply-content"></div>
+            </div>
 
-        <form id="messageForm" style="padding: 16px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; gap: 12px; position: fixed; bottom: 0; width: 100%; max-width: 480px; z-index: 100; border-top: 1px solid rgba(255,255,255,0.05)">
-            <label for="messageInput" class="sr-only">Message</label>
-            <input type="text" id="messageInput" placeholder="Type a message..." aria-label="Message" style="margin-bottom: 0; border-radius: 24px; background: var(--surface-light); border: none; padding: 12px 20px" autocomplete="off" />
-            <button type="submit" style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-gradient); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </form>
+            <form id="messageForm" style="padding: 16px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05)">
+                <label for="messageInput" class="sr-only">Message</label>
+                <input type="text" id="messageInput" placeholder="Type a message..." aria-label="Message" style="margin-bottom: 0; border-radius: 24px; background: var(--surface-light); border: none; padding: 12px 20px" autocomplete="off" />
+                <button type="submit" style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-gradient); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
         const user = requireAuth();
         const friendId = "<?php echo $friendId; ?>";
+        let currentReply = null;
+        let currentFriendUsername = 'Chat';
         
         // Render Bottom Nav
         renderNav('inbox');
@@ -266,9 +346,20 @@ $page = $_GET['page'] ?? 'home';
                 const text = input.value.trim();
                 if (!text) return;
 
+                const body = { 
+                    senderId: user.id, 
+                    receiverId: friendId, 
+                    text 
+                };
+
+                if (currentReply) {
+                    body.replyToId = currentReply.id;
+                }
+
                 try {
-                    await apiCall('sync.php', 'POST', { senderId: user.id, receiverId: friendId, text });
+                    await apiCall('sync.php', 'POST', body);
                     input.value = '';
+                    cancelReply();
                     loadMessages();
                 } catch (err) {
                     console.error(err);
@@ -276,10 +367,49 @@ $page = $_GET['page'] ?? 'home';
             });
         }
 
+        function handleSwipe(el, direction, msgId, username, text, isOwn) {
+            if ((!isOwn && direction === 'right') || (isOwn && direction === 'left')) {
+                startReply(msgId, username, text, isOwn);
+                el.style.transform = 'translateX(0)';
+            }
+        }
+
+        function startReply(id, username, text, isOwn) {
+            currentReply = { id, username, text, isOwn };
+            const preview = document.getElementById('reply-preview');
+            const label = document.getElementById('reply-label');
+            const content = document.getElementById('reply-text');
+            
+            label.textContent = isOwn ? 'Replying to yourself' : `Replying to ${username}`;
+            content.textContent = text;
+            
+            preview.classList.add('show');
+            document.getElementById('messageInput').focus();
+        }
+
+        function cancelReply() {
+            currentReply = null;
+            document.getElementById('reply-preview').classList.remove('show');
+        }
+
+        function scrollToMessage(id) {
+            const el = document.getElementById(`msg-${id}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.transition = 'background 0.5s';
+                const originalBg = el.style.background;
+                el.style.background = 'rgba(255, 255, 255, 0.1)';
+                setTimeout(() => {
+                    el.style.background = originalBg;
+                }, 1000);
+            }
+        }
+
         async function loadFriendDetails() {
             try {
                 const friend = await apiCall(`users.php?action=get&id=${friendId}`);
                 if (friend) {
+                    currentFriendUsername = friend.username;
                     document.getElementById('chat-friend-name').innerHTML = `
                         ${friend.username}
                         <span style="font-size: 12px; color: ${friend.isOnline ? '#10b981' : '#666'}; font-weight: normal; margin-left: 8px">
@@ -359,13 +489,37 @@ $page = $_GET['page'] ?? 'home';
                     window.lastMsgsJson = newJson;
                     const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
                     
+                    const msgMap = {};
+                    msgs.forEach(m => msgMap[m.id] = m);
+
                     container.innerHTML = msgs.map(msg => {
                         const isOwn = msg.senderId === user.id;
                         const time = formatMessageTime(msg.timestamp);
                         const check = isOwn ? (msg.read ? '<span style="color: #000080; font-weight: 900; margin-left: 4px">✓✓</span>' : '<span style="color: #000080; font-weight: 900; margin-left: 4px">✓</span>') : '';
                         
+                        let replyHtml = '';
+                        if (msg.replyToId && msgMap[msg.replyToId]) {
+                            const r = msgMap[msg.replyToId];
+                            const rIsOwn = r.senderId === user.id;
+                            const rName = rIsOwn ? 'You' : (r.senderId === friendId ? currentFriendUsername : 'Someone');
+                            replyHtml = `
+                                <div class="reply-bubble-mini" onclick="scrollToMessage('${r.id}')">
+                                    <strong>${rName}</strong>: ${r.text}
+                                </div>
+                            `;
+                        }
+
+                        const touchAttrs = `
+                            ontouchstart="touchStart(event, this)"
+                            ontouchmove="touchMove(event, this, ${isOwn})"
+                            ontouchend="touchEnd(event, this, '${msg.id}', '${isOwn ? 'You' : currentFriendUsername}', '${msg.text.replace(/'/g, "\\'")}', ${isOwn})"
+                        `;
+
                         return `
-                        <div class="message-bubble ${isOwn ? 'msg-own' : 'msg-other'}" style="display: flex; flex-direction: column; align-items: ${isOwn ? 'flex-end' : 'flex-start'}">
+                        <div id="msg-${msg.id}" class="message-bubble ${isOwn ? 'msg-own' : 'msg-other'}" 
+                             style="display: flex; flex-direction: column; align-items: ${isOwn ? 'flex-end' : 'flex-start'}; transition: transform 0.2s"
+                             ${touchAttrs}>
+                            ${replyHtml}
                             <div>${msg.text}</div>
                             <div style="font-size: 10px; opacity: 0.7; margin-top: 4px; display: flex; align-items: center">
                                 ${time} ${check}
@@ -374,7 +528,6 @@ $page = $_GET['page'] ?? 'home';
                         `;
                     }).join('');
 
-                    // Auto scroll if new message or first load
                     if (wasAtBottom || container.children.length === msgs.length) { 
                         scrollToBottom();
                     }
@@ -382,6 +535,60 @@ $page = $_GET['page'] ?? 'home';
             } catch (err) {
                 console.error(err);
             }
+        }
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchCurrentX = 0;
+
+        function touchStart(e, el) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchCurrentX = touchStartX;
+            el.style.transition = 'none';
+        }
+
+        function touchMove(e, el, isOwn) {
+            touchCurrentX = e.touches[0].clientX;
+            const touchCurrentY = e.touches[0].clientY;
+            const diffX = touchCurrentX - touchStartX;
+            const diffY = touchCurrentY - touchStartY;
+            
+            // Axis locking
+            if (Math.abs(diffY) > Math.abs(diffX)) return;
+            if (e.cancelable) e.preventDefault();
+            
+            if (isOwn) {
+                if (diffX < 0 && diffX > -100) {
+                    el.style.transform = `translateX(${diffX}px)`;
+                }
+            } else {
+                if (diffX > 0 && diffX < 100) {
+                    el.style.transform = `translateX(${diffX}px)`;
+                }
+            }
+        }
+
+        function touchEnd(e, el, id, name, text, isOwn) {
+            el.style.transition = 'transform 0.2s';
+            const diff = touchCurrentX - touchStartX;
+            
+            let shouldReply = false;
+            
+            if (isOwn) {
+                if (diff < -50) shouldReply = true;
+            } else {
+                if (diff > 50) shouldReply = true;
+            }
+
+            if (shouldReply) {
+                const direction = diff > 0 ? 'right' : 'left';
+                handleSwipe(el, direction, id, name, text, isOwn);
+            } else {
+                el.style.transform = 'translateX(0)';
+            }
+            touchStartX = 0;
+            touchCurrentX = 0;
         }
 
         function formatMessageTime(ms) {

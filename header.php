@@ -162,6 +162,15 @@
             }
 
             function showPopup(msg) {
+                // Check if we are currently chatting with this user
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentPage = urlParams.get('page');
+                const currentFriendId = urlParams.get('friendId');
+
+                if (currentPage === 'inbox' && currentFriendId === String(msg.senderId)) {
+                    return; // Suppress popup
+                }
+
                 const popup = document.getElementById('msg-popup');
                 if (!popup) return;
                 
