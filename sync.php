@@ -1,4 +1,6 @@
 <?php
+define('ACCESS_GRANTED', true);
+require_once 'secrets.php';
 require 'db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -214,8 +216,7 @@ if ($method === 'GET' && $action === 'sessions') {
 }
 
 function sendOneSignalNotification($userId, $senderName, $messageContent) {
-    $appId = "{YOUR-APP-ID}";
-    $restKey = "{YOUR-REST-API-KEY}";
+    global $appId, $restKey;
 
     $content = [
         "en" => "Message: " . $messageContent

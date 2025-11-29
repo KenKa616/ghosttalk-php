@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 
 # made by fuad-ismayil
+secrets.php
